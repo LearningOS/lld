@@ -14,6 +14,7 @@ add_lld_library(lldDriver
     lldCore
     lldReaderWriter
     lldYAML
+    #lldAlexELFTarget
     LLVMObject
     LLVMOption
     LLVMSupport

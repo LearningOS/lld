@@ -66,6 +66,13 @@ template <unsigned N> static void checkAlignment(uint64_t V, uint32_t Type) {
 }
 
 namespace {
+class AlexTargetInfo : public TargetInfo {
+public:
+  AlexTargetInfo();
+  virtual void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
+                           uint64_t P, uint64_t SA) const;
+};
+
 class X86TargetInfo final : public TargetInfo {
 public:
   X86TargetInfo();
@@ -232,6 +239,8 @@ TargetInfo *createTarget() {
     return new PPC64TargetInfo();
   case EM_X86_64:
     return new X86_64TargetInfo();
+  case EM_ALEX:
+    return new AlexTargetInfo();
   }
   fatal("unknown target machine");
 }
@@ -374,6 +383,38 @@ size_t TargetInfo::relaxTlsLdToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
                                   uint64_t P, uint64_t SA) const {
   llvm_unreachable("Should not have claimed to be relaxable");
 }
+
+AlexTargetInfo::AlexTargetInfo() {
+//CopyRel = R_ALEX_COPY;
+//  GotRel = R_386_GLOB_DAT;
+//  PltRel = R_386_JUMP_SLOT;
+//  IRelativeRel = R_ALEX_IRELATIVE;
+//  RelativeRel = R_386_RELATIVE;
+}
+void writeAlex16(uint8_t *Loc, uint32_t v, bool isLow16) {
+  if (isLow16) {
+    *((uint16_t*)Loc) = (uint16_t)(v & 0xFFFF);
+  }
+  else {
+    *((uint16_t*)Loc) = (uint16_t)((v>>16) & 0xFFFF);
+  }
+}
+
+void AlexTargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P, uint64_t SA) const {
+  switch(Type) {
+  case R_ALEX_HI16:
+    writeAlex16(Loc, (uint32_t)SA, false);
+    break;
+  case R_ALEX_LO16:
+    writeAlex16(Loc, (uint32_t)SA, true);
+    break;
+  case R_ALEX_32:
+    write32le(Loc, 0xffeeddcc);
+    break;
+  }
+  printf("%d\n", Type);
+}
+
 
 X86TargetInfo::X86TargetInfo() {
   CopyRel = R_386_COPY;
