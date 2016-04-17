@@ -391,7 +391,15 @@ AlexTargetInfo::AlexTargetInfo() {
 //  IRelativeRel = R_ALEX_IRELATIVE;
 //  RelativeRel = R_386_RELATIVE;
 }
-void writeAlex16(uint8_t *Loc, uint32_t v, bool isLow16) {
+void writeAlexU16(uint8_t *Loc, uint32_t v, bool isLow16) {
+  if (isLow16) {
+    *((uint16_t*)Loc) = (uint16_t)(v & 0xFFFF);
+  }
+  else {
+    *((uint16_t*)Loc) = (uint16_t)((v>>16) & 0xFFFF);
+  }
+}
+void writeAlex16(uint8_t *Loc, int32_t v, bool isLow16) {
   if (isLow16) {
     *((uint16_t*)Loc) = (uint16_t)(v & 0xFFFF);
   }
@@ -403,10 +411,13 @@ void writeAlex16(uint8_t *Loc, uint32_t v, bool isLow16) {
 void AlexTargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P, uint64_t SA) const {
   switch(Type) {
   case R_ALEX_HI16:
-    writeAlex16(Loc, (uint32_t)SA, false);
+    writeAlexU16(Loc, (uint32_t)SA, false);
     break;
   case R_ALEX_LO16:
-    writeAlex16(Loc, (uint32_t)SA, true);
+    writeAlexU16(Loc, (uint32_t)SA, true);
+    break;
+  case R_ALEX_PC16:
+    writeAlex16(Loc, SA-P, true);
     break;
   case R_ALEX_32:
     write32le(Loc, 0xffeeddcc);
