@@ -385,21 +385,8 @@ size_t TargetInfo::relaxTlsLdToLe(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 }
 
 AlexTargetInfo::AlexTargetInfo() {
-//CopyRel = R_ALEX_COPY;
-//  GotRel = R_386_GLOB_DAT;
-//  PltRel = R_386_JUMP_SLOT;
-//  IRelativeRel = R_ALEX_IRELATIVE;
-//  RelativeRel = R_386_RELATIVE;
 }
 void writeAlexU16(uint8_t *Loc, uint32_t v, bool isLow16) {
-  if (isLow16) {
-    *((uint16_t*)Loc) = (uint16_t)(v & 0xFFFF);
-  }
-  else {
-    *((uint16_t*)Loc) = (uint16_t)((v>>16) & 0xFFFF);
-  }
-}
-void writeAlex16(uint8_t *Loc, int32_t v, bool isLow16) {
   if (isLow16) {
     *((uint16_t*)Loc) = (uint16_t)(v & 0xFFFF);
   }
@@ -412,18 +399,22 @@ void AlexTargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, u
   switch(Type) {
   case R_ALEX_HI16:
     writeAlexU16(Loc, (uint32_t)SA, false);
+    printf("high 16bit\t0x%08x\n", (uint32_t)SA);
     break;
   case R_ALEX_LO16:
     writeAlexU16(Loc, (uint32_t)SA, true);
+    printf("low 16bit\t0x%08x\n", (uint32_t)SA);
     break;
   case R_ALEX_PC16:
-    writeAlex16(Loc, SA-P, true);
+    writeAlexU16(Loc, (uint32_t)(SA-P) / 4, true);
+    printf("pcrel 16\t0x%08x\n", (uint32_t)(SA-P) / 4);
     break;
   case R_ALEX_32:
-    write32le(Loc, 0xffeeddcc);
+    write32le(Loc, static_cast<uint32_t>(SA));
+    printf("uint32 val\t0x%08x\n", static_cast<uint32_t>(SA));
     break;
   }
-  printf("%d\n", Type);
+
 }
 
 
